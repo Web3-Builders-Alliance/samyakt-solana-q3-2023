@@ -8,9 +8,9 @@
 node_modules
 .yarn
 yarn.lock
+package-lock.json
 
 *wallet.json
-convert.js
 
 wba_vault.json
 
