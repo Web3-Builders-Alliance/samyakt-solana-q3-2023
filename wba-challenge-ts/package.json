@@ -8,7 +8,22 @@
     "airdrop": "ts-node ./prereqs/airdrop.ts",
     "transfer": "ts-node ./prereqs/transfer.ts",
     "enroll": "ts-node ./prereqs/enroll.ts",
-    "transferallwba": "ts-node ./prereqs/transferallwba.ts"
+    "transferallwba": "ts-node ./prereqs/transferallwba.ts",
+    "airdrop_to_wallet": "ts-node ./tools/airdrop_to_wallet.ts",
+    "base58_to_wallet": "ts-node ./tools/base58_to_wallet.ts",
+    "wallet_to_base58": "ts-node ./tools/wallet_to_base58.ts",
+    "spl_init": "ts-node ./spl_token/spl_init.ts",
+    "spl_mint": "ts-node ./spl_token/spl_mint.ts",
+    "spl_transfer": "ts-node ./spl_token/spl_transfer.ts",
+    "spl_metadata": "ts-node ./spl_token/spl_metadata.ts",
+    "nft_image": "ts-node ./nfts/nft_image.ts",
+    "nft_metadata": "ts-node ./nfts/nft_metadata.ts",
+    "nft_mint": "ts-node ./nfts/nft_mint.ts",
+    "vault_init": "ts-node ./vault/vault_init.ts",
+    "vault_deposit": "ts-node ./vault/vault_deposit.ts",
+    "vault_withdraw": "ts-node ./vault/vault_withdraw.ts",
+    "vault_deposit_spl": "ts-node ./vault/vault_deposit_spl.ts",
+    "vault_withdraw_spl": "ts-node ./vault/vault_withdraw_spl.ts"
   },
   "dependencies": {
     "@metaplex-foundation/js": "^0.19.3",
