@@ -33,7 +33,7 @@ const token_decimals = 1_000_000n;
             connection,
             keypair,
             mint,
-            keypair.publicKey
+            to
         );
 
         // Transfer the new token to the "toTokenAccount" we just created
