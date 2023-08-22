@@ -39,7 +39,7 @@ const [metadata_pda, _bump] = PublicKey.findProgramAddressSync(metadata_seeds, t
                     data: {
                         name: "WBA TOKEN",
                         symbol: "WBAT",
-                        uri: "",
+                        uri: "https://raw.githubusercontent.com/Web3-Builders-Alliance/samyakt-solana-q3-2023/main/wba-challenge-ts/spl_token/metadata.json",
                         sellerFeeBasisPoints: 0,
                         creators: null,
                         collection: null,
