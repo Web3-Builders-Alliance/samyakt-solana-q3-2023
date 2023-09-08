@@ -4,6 +4,8 @@ declare_id!("CTpCj2U7zZ1gHB7nJQ2vPpEFTeWP3yPjWcZm2PHogw5d");
 
 #[program]
 pub mod vault {
+    use anchor_lang::system_program::{Transfer, transfer};
+
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
@@ -12,6 +14,43 @@ pub mod vault {
         ctx.accounts.state.state_bump = *ctx.bumps.get("state").unwrap();
 
         Ok(())
+    }
+
+    pub fn deposit(ctx: Context<Payment>, amount: u64) -> Result<()> {
+        let accounts = Transfer {
+            from: ctx.accounts.owner.to_account_info(),
+            to: ctx.accounts.vault.to_account_info(),
+        };
+
+        let cpi_ctx = CpiContext::new(
+            ctx.accounts.system_program.to_account_info(), 
+            accounts
+        );
+
+        transfer(cpi_ctx, amount)
+    }
+
+    pub fn withdraw(ctx: Context<Payment>, amount: u64) -> Result<()> {
+        let accounts = Transfer {
+            from: ctx.accounts.vault.to_account_info(),
+            to: ctx.accounts.owner.to_account_info()
+        };
+
+        let seeds = &[
+            b"vault",
+            ctx.accounts.state.to_account_info().key.as_ref(),
+            &[ctx.accounts.state.vault_bump]
+        ];
+
+        let pda_seeds = &[&seeds[..]];
+
+        let cpi_ctx = CpiContext::new_with_signer(
+            ctx.accounts.system_program.to_account_info(),
+            accounts,
+            pda_seeds
+        );
+
+        transfer(cpi_ctx, amount)
     }
 }
 
