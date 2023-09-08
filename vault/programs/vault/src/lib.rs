@@ -1,14 +1,15 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
-    token::{TokenAccount, Mint, Token, Transfer as SplTransfer, transfer as spl_transfer}, 
+    token::{TokenAccount, Mint, Token, Transfer as SplTransfer, transfer as spl_transfer, CloseAccount, close_account}, 
     associated_token::AssociatedToken
 };
+use anchor_lang::system_program::{Transfer, transfer};
 
 declare_id!("CTpCj2U7zZ1gHB7nJQ2vPpEFTeWP3yPjWcZm2PHogw5d");
 
 #[program]
 pub mod vault {
-    use anchor_lang::system_program::{Transfer, transfer};
+
 
     use super::*;
 
@@ -96,6 +97,73 @@ pub mod vault {
 
         spl_transfer(cpi_ctx, amount)
         
+    }
+
+    pub fn close_vault(ctx: Context<CloseVault>) -> Result<()> {
+        match ctx.accounts.vault.try_lamports() {
+            Ok(amount) => {
+                let accounts = Transfer {
+                    from: ctx.accounts.vault.to_account_info(),
+                    to: ctx.accounts.owner.to_account_info(),
+                };
+
+                let seeds = &[
+                    b"auth",
+                    ctx.accounts.state.to_account_info().key.as_ref(),
+                    &[ctx.accounts.state.auth_bump]
+                ];
+
+                let pda_seeds = &[&seeds[..]];
+
+                let cpi_ctx = CpiContext::new_with_signer(
+                    ctx.accounts.system_program.to_account_info(),
+                    accounts,
+                    pda_seeds
+                );
+
+                transfer(cpi_ctx, amount)?;
+            },
+            Err(_) => ()
+        }
+
+        let seeds = &[
+            b"auth",
+            ctx.accounts.state.to_account_info().key.as_ref(),
+            &[ctx.accounts.state.auth_bump]
+        ];
+
+        let pda_seeds = &[&seeds[..]];
+
+        if ctx.accounts.vault_ata.amount > 0 {
+            let accounts = SplTransfer {
+                from: ctx.accounts.vault_ata.to_account_info(),
+                to: ctx.accounts.owner_ata.to_account_info(),
+                authority: ctx.accounts.auth.to_account_info(),
+            };
+
+            let cpi_ctx = CpiContext::new_with_signer(
+                ctx.accounts.token_program.to_account_info(), 
+                accounts, 
+                pda_seeds
+            );
+
+            spl_transfer(cpi_ctx, ctx.accounts.vault_ata.amount)?;
+        }
+
+        let close_account_spl = CloseAccount {
+            account: ctx.accounts.vault_ata.to_account_info(),
+            destination: ctx.accounts.owner_ata.to_account_info(),
+            authority: ctx.accounts.auth.to_account_info(),
+        };
+
+        let cpi_ctx = CpiContext::new_with_signer(
+            ctx.accounts.token_program.to_account_info(),
+            close_account_spl,
+            pda_seeds
+        );
+
+        close_account(cpi_ctx)
+
     }
 }
 
@@ -232,6 +300,56 @@ pub struct SPLWithdraw<'info> {
     token_program: Program<'info, Token>,
     associated_token_program: Program<'info, AssociatedToken>,
     system_program: Program<'info, System>
+}
+
+#[derive(Accounts)]
+pub struct CloseVault<'info> {
+    #[account(mut)]
+    owner: Signer<'info>,
+
+    #[account(
+        mut,
+        associated_token::mint = mint,
+        associated_token::authority = owner
+    )]
+    owner_ata: Account<'info, TokenAccount>,
+
+    mint: Account<'info, Mint>,
+
+    #[account(
+        seeds = [b"auth", state.key().as_ref()],
+        bump = state.auth_bump,
+    )]
+    /// CHECK: This is safe.
+    auth: UncheckedAccount<'info>,
+
+    #[account(
+        mut,
+        seeds = [b"spl_vault", state.key().as_ref()],
+        bump,
+        token::mint = mint,
+        token::authority = auth
+    )]
+    vault_ata: Account<'info, TokenAccount>,
+
+    #[account(
+        mut,
+        seeds = [b"vault", state.key().as_ref()],
+        bump = state.vault_bump
+    )]
+    vault: SystemAccount<'info>,
+
+    #[account(
+        mut,
+        close = owner,
+        seeds = [b"state", owner.key().as_ref()],
+        bump = state.state_bump
+    )]
+    state: Account<'info, VaultState>,
+
+    token_program: Program<'info, Token>,
+    associated_token_program: Program<'info, AssociatedToken>,
+    system_program: Program<'info, System>,
 }
 
 #[account]
